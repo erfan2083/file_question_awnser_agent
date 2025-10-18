@@ -11,3 +11,4 @@ pytesseract
 requests
 streamlit
 tqdm
+whoosh
