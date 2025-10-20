@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount the data volume for persistent uploads and vectorstores
+      - ./backend/data:/app/data
+      # Mount Hugging Face cache to avoid re-downloading models
+      - hf_cache:/root/.cache/huggingface
+    tty: true # Keep container running (good for dev)
+    environment:
+      # Set Hugging Face cache directory inside the container
+      - HF_HOME=/root/.cache/huggingface
+      # Use transformers offline (once models are cached) - optional
+      # - TRANSFORMERS_OFFLINE=1
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173" # Vite dev server port
+    volumes:
+      - ./frontend:/app # Mount source code for hot-reloading
+      - /app/node_modules # Don't mount host node_modules
+    depends_on:
+      - backend
+
+volumes:
+  hf_cache: # Define the named volume for the cache
