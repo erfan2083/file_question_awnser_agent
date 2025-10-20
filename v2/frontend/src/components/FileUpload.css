@@ -1,0 +1,95 @@
+.file-upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.file-input-hidden {
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -1;
+}
+
+.file-input-label {
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  background-color: var(--bg-color-light);
+  color: #f9f9f9;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  display: inline-block;
+}
+
+.file-input-label:hover {
+  background-color: #333;
+}
+
+@media (prefers-color-scheme: light) {
+  .file-input-label {
+    color: #213547;
+    background-color: #f0f0f0;
+  }
+  .file-input-label:hover {
+    background-color: #e0e0e0;
+  }
+}
+
+.upload-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--border-color);
+  color: #fff;
+  border: none;
+}
+
+.upload-button:hover {
+  background-color: #6a6aff;
+  border-color: transparent;
+}
+
+.status-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: var(--border-radius);
+  text-align: left;
+}
+
+.status-message p {
+  margin: 0;
+}
+
+.status-message.success {
+  background-color: #2a4a2a;
+  color: #aaffaa;
+}
+.status-message.error {
+  background-color: #4a2a2a;
+  color: #ffaaaa;
+}
+.status-message.uploading {
+  background-color: #2a3a4a;
+  color: #aaccff;
+}
+
+.icon-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
