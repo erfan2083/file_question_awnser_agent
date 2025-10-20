@@ -1,0 +1,36 @@
+# FastAPI
+fastapi
+uvicorn[standard]
+python-multipart
+
+# LangChain & LangGraph
+langchain
+langgraph
+langchain-community
+langchain-huggingface
+
+# LLM & Embeddings
+torch --index-url https://download.pytorch.org/whl/cpu
+transformers
+accelerate
+bitsandbytes
+sentence-transformers
+
+# Vectorstore & Retrieval
+faiss-cpu
+rank_bm25
+
+# Document Loaders & OCR
+unstructured[all-docs]
+pypdf
+python-docx
+pillow
+pytesseract
+
+# Config & Utilities
+pydantic-settings
+requests
+
+# Testing
+pytest
+httpx
