@@ -1,0 +1,42 @@
+[
+    {
+        "query": "What is the main purpose of this document?",
+        "expected_answer": "",
+        "expected_keywords": ["purpose", "objective", "goal"],
+        "category": "factual",
+        "language": "en",
+        "is_active": true
+    },
+    {
+        "query": "List the key findings mentioned in the document",
+        "expected_answer": "",
+        "expected_keywords": ["findings", "results", "conclusions"],
+        "category": "factual",
+        "language": "en",
+        "is_active": true
+    },
+    {
+        "query": "What recommendations are provided?",
+        "expected_answer": "",
+        "expected_keywords": ["recommendations", "suggestions", "propose"],
+        "category": "factual",
+        "language": "en",
+        "is_active": true
+    },
+    {
+        "query": "خلاصه این سند را بده",
+        "expected_answer": "",
+        "expected_keywords": ["خلاصه", "مختصر"],
+        "category": "summarization",
+        "language": "fa",
+        "is_active": true
+    },
+    {
+        "query": "Summarize the document in 3 sentences",
+        "expected_answer": "",
+        "expected_keywords": ["summary"],
+        "category": "summarization",
+        "language": "en",
+        "is_active": true
+    }
+]
