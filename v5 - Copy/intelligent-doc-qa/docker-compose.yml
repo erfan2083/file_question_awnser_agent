@@ -1,0 +1,84 @@
+# 'version' line has been removed
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: docqa_db
+    environment:
+      # These are still needed for the 'db' service itself
+      POSTGRES_DB: ${POSTGRES_DB:-docqa_db}
+      POSTGRES_USER: ${POSTGRES_USER:-docqa_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-docqa_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-docqa_user} -d ${POSTGRES_DB:-docqa_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: docqa_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: docqa_backend
+    command: /app/entrypoint.sh
+    volumes:
+      - ./backend:/app
+      - media_files:/app/media
+    ports:
+      - "8000:8000"
+    # ADDED THIS BLOCK:
+    # This tells the 'backend' service to load variables
+    # from the .env file located at ./backend/.env
+    env_file:
+      - ./backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    
+    entrypoint: [] 
+    
+    command: celery -A config worker --loglevel=info
+    volumes:
+      - ./backend:/app
+      - media_files:/app/media
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - backend
+      - redis
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: docqa_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  media_files:
