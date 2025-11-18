@@ -133,7 +133,7 @@ CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:
 
 # Google Gemini API Settings
 GOOGLE_API_KEY = config('GOOGLE_API_KEY', default='')
-GEMINI_MODEL = config('GEMINI_MODEL', default='gemini-pro')
+GEMINI_MODEL = config('GEMINI_MODEL', default='gemini-2.5-flash')
 GEMINI_EMBEDDING_MODEL = config('GEMINI_EMBEDDING_MODEL', default='models/text-embedding-004')
 
 # Document Processing Settings

@@ -8,13 +8,23 @@ const DocumentList = () => {
   const queryClient = useQueryClient();
   
   // Fetch documents
+  // Fetch documents
   const { data: documents, isLoading, refetch } = useQuery(
     'documents',
-    () => documentsApi.list().then(res => res.data),
+    () => documentsApi.list().then(res => {
+      // Handle both paginated and non-paginated responses
+      if (res.data && Array.isArray(res.data.results)) {
+        return res.data.results;
+      }
+      return Array.isArray(res.data) ? res.data : [];
+    }),
     {
       refetchInterval: (data) => {
+        // Ensure data is an array before calling .some()
+        if (!Array.isArray(data)) return false;
+        
         // Poll every 3 seconds if any document is processing
-        const hasProcessing = data?.some(doc => doc.status === 'PROCESSING');
+        const hasProcessing = data.some(doc => doc.status === 'PROCESSING');
         return hasProcessing ? 3000 : false;
       },
     }

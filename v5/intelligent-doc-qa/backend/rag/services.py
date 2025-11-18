@@ -4,9 +4,11 @@ RAG service with multi-agent orchestration using LangGraph.
 
 from typing import List, Dict, Any, TypedDict, Annotated
 import operator
+import os # Keep this import for a clean code base, even if proxy is not used
 from datetime import datetime
 
 import google.generativeai as genai
+from google.api_core import client_options as client_options_lib # New import
 from django.conf import settings
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, END
@@ -32,13 +34,28 @@ class RAGOrchestrator:
     """Multi-agent RAG orchestration using LangGraph."""
     
     def __init__(self):
-        """Initialize the RAG orchestrator."""
-        genai.configure(api_key=settings.GOOGLE_API_KEY)
+        """Initialize the RAG orchestrator with forced REST transport for VPNs."""
+        
+        # --- TRANSPORT CONFIGURATION (KEY FIX FOR VPN/GEO-BLOCKING) ---
+        # This forces the Gemini SDK to use standard HTTP (REST) which works better with VPNs/Proxies.
+        client_opts = client_options_lib.ClientOptions(
+            api_endpoint="generativelanguage.googleapis.com"
+        )
+        
+        genai.configure(
+            api_key=settings.GOOGLE_API_KEY,
+            transport='rest',  
+            client_options=client_opts
+        )
+            
         self.embedding_model = settings.GEMINI_EMBEDDING_MODEL
+        
+        # Configure LLM (Chat) to also use REST
         self.llm = ChatGoogleGenerativeAI(
             model=settings.GEMINI_MODEL,
             google_api_key=settings.GOOGLE_API_KEY,
-            temperature=0.3
+            temperature=0.3,
+            transport="rest" 
         )
         self.top_k = settings.TOP_K_RETRIEVAL
         
@@ -85,13 +102,6 @@ class RAGOrchestrator:
     ) -> Dict[str, Any]:
         """
         Process a user query through the multi-agent pipeline.
-        
-        Args:
-            query: User's question
-            chat_history: Previous conversation messages
-            
-        Returns:
-            Dictionary with answer, citations, and metadata
         """
         # Initialize state
         initial_state = {
@@ -116,6 +126,8 @@ class RAGOrchestrator:
                 "error": final_state.get("error", "")
             }
         except Exception as e:
+            # Added error printing for debugging
+            print(f"❌ RAG Processing Critical Error: {str(e)}")
             return {
                 "answer": "",
                 "citations": [],
@@ -124,18 +136,9 @@ class RAGOrchestrator:
             }
     
     def _router_agent(self, state: AgentState) -> AgentState:
-        """
-        Router agent: classify user intent.
-        
-        Determines whether the query is:
-        - RAG_QUERY: Standard question answering
-        - SUMMARIZE: Summarization request
-        - TRANSLATE: Translation request
-        - CHECKLIST: Checklist generation
-        """
+        """Router agent: classify user intent."""
         query = state["query"].lower()
         
-        # Simple intent classification (can be enhanced with LLM)
         if any(keyword in query for keyword in [
             "summarize", "summary", "خلاصه", "خلاصه کن", "خلاصه‌اش کن"
         ]):
@@ -155,9 +158,7 @@ class RAGOrchestrator:
         return state
     
     def _route_decision(self, state: AgentState) -> str:
-        """Decide which agent to route to based on intent."""
         intent = state["intent"]
-        
         if intent == "RAG_QUERY":
             return "retriever"
         elif intent in ["SUMMARIZE", "TRANSLATE", "CHECKLIST"]:
@@ -166,11 +167,7 @@ class RAGOrchestrator:
             return "end"
     
     def _retriever_agent(self, state: AgentState) -> AgentState:
-        """
-        Retriever agent: find relevant document chunks.
-        
-        Uses hybrid search (vector + BM25) with reranking.
-        """
+        """Retriever agent: find relevant document chunks."""
         query = state["query"]
         
         try:
@@ -201,7 +198,7 @@ class RAGOrchestrator:
             )
             
             # Take top-k
-            top_chunks = combined_results[:self.top_k]
+            top_chunks = combined_results[:settings.TOP_K_RETRIEVAL]
             
             # Format chunks
             retrieved_chunks = []
@@ -220,17 +217,14 @@ class RAGOrchestrator:
             state["metadata"]["num_retrieved"] = len(retrieved_chunks)
             
         except Exception as e:
+            print(f"❌ Retriever Agent Error: {str(e)}")
             state["error"] = f"Retrieval error: {str(e)}"
             state["retrieved_chunks"] = []
         
         return state
     
     def _reasoning_agent(self, state: AgentState) -> AgentState:
-        """
-        Reasoning agent: generate answer with chain-of-thought.
-        
-        Synthesizes information from retrieved chunks and provides citations.
-        """
+        """Reasoning agent: generate answer with chain-of-thought."""
         query = state["query"]
         chunks = state["retrieved_chunks"]
         
@@ -252,7 +246,6 @@ class RAGOrchestrator:
         
         context = "\n\n".join(context_parts)
         
-        # Create prompt with chain-of-thought
         prompt = f"""You are a helpful AI assistant that answers questions based strictly on the provided document context.
 
 Context from documents:
@@ -271,9 +264,8 @@ Answer:"""
         
         try:
             # Generate response using Gemini
-            model = genai.GenerativeModel(settings.GEMINI_MODEL)
-            response = model.generate_content(prompt)
-            answer = response.text
+            response = self.llm.invoke(prompt)
+            answer = response.content
             
             # Generate citations
             citations = []
@@ -291,6 +283,7 @@ Answer:"""
             state["metadata"]["agent_type"] = "reasoning"
             
         except Exception as e:
+            print(f"❌ Reasoning Agent Error: {str(e)}")
             state["error"] = f"Reasoning error: {str(e)}"
             state["answer"] = "I encountered an error while generating the answer."
             state["citations"] = []
@@ -298,55 +291,30 @@ Answer:"""
         return state
     
     def _utility_agent(self, state: AgentState) -> AgentState:
-        """
-        Utility agent: handle summarization, translation, checklist generation.
-        """
+        """Utility agent: handle summarization, translation, checklist generation."""
         query = state["query"]
         intent = state["intent"]
         
         try:
-            model = genai.GenerativeModel(settings.GEMINI_MODEL)
-            
             if intent == "SUMMARIZE":
-                prompt = f"""Summarize the following text concisely:
-
-{query}
-
-Provide a clear, concise summary in the same language as the original text."""
-                
+                prompt = f"Summarize the following text concisely:\n\n{query}\n\nProvide a clear, concise summary."
             elif intent == "TRANSLATE":
-                # Detect source and target language
-                if any(char for char in query if ord(char) > 1000):  # Persian chars
-                    prompt = f"""Translate the following Persian text to English:
-
-{query}
-
-Provide only the English translation."""
-                else:
-                    prompt = f"""Translate the following English text to Persian:
-
-{query}
-
-Provide only the Persian translation."""
-            
+                prompt = f"Translate the following text to English if it's Persian, or Persian if it's English:\n\n{query}"
             elif intent == "CHECKLIST":
-                prompt = f"""Based on the following text, create a structured checklist or task list:
-
-{query}
-
-Format the output as a clear, actionable checklist."""
-            
+                prompt = f"Create a structured checklist or task list based on the following text:\n\n{query}"
             else:
                 state["error"] = f"Unknown utility intent: {intent}"
                 return state
             
-            response = model.generate_content(prompt)
-            state["answer"] = response.text
+            # Use self.llm (ChatGoogleGenerativeAI) for utility tasks
+            response = self.llm.invoke(prompt)
+            state["answer"] = response.content
             state["citations"] = []
             state["metadata"]["agent_type"] = "utility"
             state["metadata"]["utility_function"] = intent.lower()
             
         except Exception as e:
+            print(f"❌ Utility Agent Error: {str(e)}")
             state["error"] = f"Utility agent error: {str(e)}"
             state["answer"] = "I encountered an error processing your request."
         
@@ -410,15 +378,6 @@ Format the output as a clear, actionable checklist."""
     ) -> List[tuple]:
         """
         Combine vector and BM25 results with reranking.
-        
-        Args:
-            vector_results: Results from vector search
-            bm25_results: Results from BM25 search
-            query: Original query
-            alpha: Weight for vector search (1-alpha for BM25)
-            
-        Returns:
-            Combined and reranked results
         """
         # Normalize scores
         def normalize_scores(results):

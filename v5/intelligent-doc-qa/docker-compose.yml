@@ -39,8 +39,8 @@ services:
       - DB_PASSWORD=docqa_password
       - DB_HOST=db
       - DB_PORT=5432
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - GEMINI_MODEL=gemini-pro
+      - GOOGLE_API_KEY=AIzaSyCodPZqqYAUXGCyDNawjgoC0P_8CFGM81k
+      - GEMINI_MODEL=gemini-2.5-flash
       - GEMINI_EMBEDDING_MODEL=models/text-embedding-004
       - CHUNK_SIZE=800
       - CHUNK_OVERLAP=200
