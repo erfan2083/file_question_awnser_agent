@@ -1,6 +1,6 @@
 # Intelligent Document Question Answering System
 
-A multi-agent document-based Question Answering system built with Django, React, LangChain, LangGraph, and Google Gemini AI.
+A multi-agent document-based Question Answering system built with **Hexagonal Architecture**, Django, React, LangChain, LangGraph, and Google Gemini AI. Now using **UV package manager** for fast and reliable dependency management.
 
 ## 📋 Table of Contents
 
@@ -50,6 +50,10 @@ This system enables users to upload documents (PDF, DOCX, TXT, images) and ask n
 
 ## 🏗 Architecture
 
+This project follows **Hexagonal Architecture** (Ports & Adapters) for clean separation of concerns. See [HEXAGONAL_ARCHITECTURE.md](HEXAGONAL_ARCHITECTURE.md) for detailed documentation.
+
+### High-Level Overview
+
 ```
 ┌─────────────┐
 │   Frontend  │ (React SPA)
@@ -58,14 +62,25 @@ This system enables users to upload documents (PDF, DOCX, TXT, images) and ask n
        │ HTTP/REST
        │
 ┌──────▼──────────────────────────────────────┐
-│            Backend (Django)                  │
+│      Backend (Django + Hexagonal Arch)      │
 │              (Port 8000)                     │
 │                                              │
 │  ┌────────────────────────────────────────┐ │
-│  │   REST API Layer (DRF)                 │ │
+│  │   API Layer (HTTP Adapters)            │ │
 │  └────────────┬───────────────────────────┘ │
 │               │                              │
 │  ┌────────────▼───────────────────────────┐ │
+│  │   Application Layer (Use Cases)        │ │
+│  └────────────┬───────────────────────────┘ │
+│               │                              │
+│  ┌────────────▼───────────────────────────┐ │
+│  │   Domain Layer (Business Logic)        │ │
+│  └────────────┬───────────────────────────┘ │
+│               │                              │
+│  ┌────────────▼───────────────────────────┐ │
+│  │   Infrastructure Layer (Adapters)      │ │
+│  │   - Django ORM Repositories            │ │
+│  │   - Gemini AI Services                 │ │
 │  │   RAG Orchestration (LangGraph)        │ │
 │  │                                        │ │
 │  │  ┌──────────┐  ┌───────────┐         │ │
@@ -115,7 +130,9 @@ User Query
 ## 🛠 Tech Stack
 
 ### Backend
+- **Architecture**: Hexagonal Architecture (Ports & Adapters)
 - **Framework**: Django 5.0 + Django REST Framework
+- **Package Manager**: UV (fast Python package installer)
 - **AI/ML**: LangChain, LangGraph, Google Gemini APIs
 - **Database**: PostgreSQL with pgvector extension
 - **Document Processing**: PyPDF2, pdfplumber, python-docx, Google Vision API
@@ -136,9 +153,11 @@ User Query
 
 ### Prerequisites
 
-- Docker & Docker Compose
+- Docker & Docker Compose (or UV + Python 3.11+)
 - Google API Key (for Gemini)
 - Git
+
+> **Note**: The project now uses **UV** package manager for faster dependency management.
 
 ### Setup Steps
 
@@ -366,37 +385,38 @@ The project enforces code quality through:
 - **flake8**: Linting
 - **pre-commit**: Automated checks
 
-## 📁 Project Structure
+## 📁 Project Structure (Hexagonal Architecture)
 
 ```
 intelligent-doc-qa/
 ├── backend/
+│   ├── core/                # Core business logic (hexagonal)
+│   │   ├── domain/          # Domain entities & value objects
+│   │   │   ├── entities/    # Document, Chunk, Chat entities
+│   │   │   ├── value_objects/  # Status, FileType, Embedding
+│   │   │   ├── services/    # Domain services
+│   │   │   └── exceptions.py
+│   │   ├── application/     # Use cases & ports
+│   │   │   ├── use_cases/   # UploadDocument, ProcessDocument, AskQuestion
+│   │   │   ├── dto/         # Data Transfer Objects
+│   │   │   └── ports/       # Interfaces (repositories, services)
+│   │   └── infrastructure/  # Adapters
+│   │       ├── adapters/    # Repository & service implementations
+│   │       │   ├── repositories/  # Django ORM adapters
+│   │       │   ├── services/      # Gemini, text extractors
+│   │       │   └── rag/           # LangGraph orchestrator
+│   │       └── persistence/ # Django models
+│   ├── api/                 # HTTP adapters
+│   │   └── v1/              # API v1 endpoints
 │   ├── config/              # Django settings
-│   │   ├── settings.py
-│   │   ├── urls.py
-│   │   └── wsgi.py
-│   ├── documents/           # Document management app
-│   │   ├── models.py
-│   │   ├── views.py
-│   │   ├── serializers.py
-│   │   ├── services.py      # Document processing logic
-│   │   └── urls.py
-│   ├── chat/                # Chat app
-│   │   ├── models.py
-│   │   ├── views.py
-│   │   ├── serializers.py
-│   │   └── urls.py
+│   ├── documents/           # Legacy app (kept for migrations)
+│   ├── chat/                # Legacy app (kept for migrations)
 │   ├── evaluation/          # Evaluation app
-│   │   ├── models.py
-│   │   ├── views.py
-│   │   ├── serializers.py
-│   │   └── urls.py
-│   ├── rag/                 # RAG orchestration
-│   │   └── services.py      # LangGraph multi-agent logic
-│   ├── tests/               # Test suites
+│   ├── rag/                 # Legacy RAG (wrapped by adapter)
 │   ├── manage.py
-│   ├── requirements.txt
-│   ├── Dockerfile
+│   ├── pyproject.toml       # UV dependencies
+│   ├── uv.lock              # Locked dependencies
+│   ├── Dockerfile           # Updated for UV
 │   └── pytest.ini
 ├── frontend/
 │   ├── public/
