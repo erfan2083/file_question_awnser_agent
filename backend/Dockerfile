@@ -23,10 +23,20 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 # Copy dependency files
 COPY pyproject.toml uv.lock ./
 
+# Copy source code (needed for hatchling to build the package)
+COPY api ./api
+COPY chat ./chat
+COPY config ./config
+COPY core ./core
+COPY documents ./documents
+COPY evaluation ./evaluation
+COPY rag ./rag
+COPY manage.py .
+
 # Install Python dependencies using uv
 RUN uv sync --frozen --no-dev
 
-# Copy project files
+# Copy remaining project files
 COPY . .
 
 # Collect static files (if needed)
