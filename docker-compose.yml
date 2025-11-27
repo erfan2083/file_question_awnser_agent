@@ -25,7 +25,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: docqa_backend
-    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    command: sh -c "uv run python manage.py migrate && uv run python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./backend:/app
       - media_files:/app/media
