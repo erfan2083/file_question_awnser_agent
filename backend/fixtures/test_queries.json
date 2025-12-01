@@ -1,0 +1,122 @@
+[
+  {
+    "model": "evaluation.testquery",
+    "pk": 1,
+    "fields": {
+      "query": "What is machine learning?",
+      "expected_answer": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed.",
+      "expected_keywords": ["machine", "learning", "AI", "artificial", "intelligence", "systems", "data"],
+      "category": "factual",
+      "language": "en",
+      "is_active": true
+    }
+  },
+  {
+    "model": "evaluation.testquery",
+    "pk": 2,
+    "fields": {
+      "query": "What are the types of machine learning?",
+      "expected_answer": "The main types of machine learning are supervised learning, unsupervised learning, and reinforcement learning.",
+      "expected_keywords": ["supervised", "unsupervised", "reinforcement", "learning", "types"],
+      "category": "factual",
+      "language": "en",
+      "is_active": true
+    }
+  },
+  {
+    "model": "evaluation.testquery",
+    "pk": 3,
+    "fields": {
+      "query": "What is deep learning?",
+      "expected_answer": "Deep learning is a subset of machine learning that uses neural networks with multiple layers to learn from data.",
+      "expected_keywords": ["deep", "learning", "neural", "networks", "layers", "machine learning"],
+      "category": "factual",
+      "language": "en",
+      "is_active": true
+    }
+  },
+  {
+    "model": "evaluation.testquery",
+    "pk": 4,
+    "fields": {
+      "query": "What are the applications of machine learning?",
+      "expected_answer": "Machine learning applications include healthcare, finance, technology, transportation, image recognition, and natural language processing.",
+      "expected_keywords": ["healthcare", "finance", "applications", "recognition", "prediction"],
+      "category": "factual",
+      "language": "en",
+      "is_active": true
+    }
+  },
+  {
+    "model": "evaluation.testquery",
+    "pk": 5,
+    "fields": {
+      "query": "How does supervised learning work?",
+      "expected_answer": "Supervised learning uses labeled training data where the algorithm learns to map inputs to known outputs, making predictions on new data.",
+      "expected_keywords": ["supervised", "labeled", "training", "data", "predictions", "outputs"],
+      "category": "technical",
+      "language": "en",
+      "is_active": true
+    }
+  },
+  {
+    "model": "evaluation.testquery",
+    "pk": 6,
+    "fields": {
+      "query": "یادگیری ماشین چیست؟",
+      "expected_answer": "یادگیری ماشین زیرمجموعه‌ای از هوش مصنوعی است که به سیستم‌ها امکان یادگیری از تجربه را می‌دهد.",
+      "expected_keywords": ["یادگیری", "ماشین", "هوش", "مصنوعی", "سیستم"],
+      "category": "factual",
+      "language": "fa",
+      "is_active": true
+    }
+  },
+  {
+    "model": "evaluation.testquery",
+    "pk": 7,
+    "fields": {
+      "query": "انواع یادگیری ماشین کدامند؟",
+      "expected_answer": "انواع اصلی یادگیری ماشین شامل یادگیری نظارت شده، یادگیری بدون نظارت و یادگیری تقویتی است.",
+      "expected_keywords": ["نظارت", "تقویتی", "انواع", "یادگیری"],
+      "category": "factual",
+      "language": "fa",
+      "is_active": true
+    }
+  },
+  {
+    "model": "evaluation.testquery",
+    "pk": 8,
+    "fields": {
+      "query": "Explain the difference between classification and regression",
+      "expected_answer": "Classification predicts discrete categories or labels, while regression predicts continuous numerical values.",
+      "expected_keywords": ["classification", "regression", "discrete", "continuous", "categories", "numerical"],
+      "category": "technical",
+      "language": "en",
+      "is_active": true
+    }
+  },
+  {
+    "model": "evaluation.testquery",
+    "pk": 9,
+    "fields": {
+      "query": "What is natural language processing?",
+      "expected_answer": "Natural language processing (NLP) is a field of AI that enables computers to understand, interpret, and generate human language.",
+      "expected_keywords": ["natural", "language", "processing", "NLP", "understand", "text"],
+      "category": "factual",
+      "language": "en",
+      "is_active": true
+    }
+  },
+  {
+    "model": "evaluation.testquery",
+    "pk": 10,
+    "fields": {
+      "query": "What is a neural network?",
+      "expected_answer": "A neural network is a computational model inspired by the human brain, consisting of interconnected nodes organized in layers that process information.",
+      "expected_keywords": ["neural", "network", "brain", "nodes", "layers", "computational"],
+      "category": "technical",
+      "language": "en",
+      "is_active": true
+    }
+  }
+]

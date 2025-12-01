@@ -1,0 +1,79 @@
+repos:
+  # Black - Code formatter
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        language_version: python3.11
+        args: ['--line-length=100']
+        exclude: ^(migrations/|\.git/)
+
+  # isort - Import sorter
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ['--profile=black', '--line-length=100']
+        exclude: ^(migrations/|\.git/)
+
+  # Flake8 - Linter
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        args: [
+          '--max-line-length=100',
+          '--ignore=E501,W503,E203',
+          '--exclude=migrations,__pycache__,.git,venv'
+        ]
+        additional_dependencies:
+          - flake8-docstrings
+          - flake8-bugbear
+
+  # Trailing whitespace
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(\.md|\.txt)$
+      - id: end-of-file-fixer
+        exclude: ^(\.md|\.txt)$
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: debug-statements
+
+  # pytest - Run tests before commit
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: bash -c 'cd backend && python -m pytest tests/ -x -q --tb=short'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [push]
+
+  # Check for Django migrations
+  - repo: local
+    hooks:
+      - id: django-check
+        name: Django Check
+        entry: bash -c 'cd backend && python manage.py check'
+        language: system
+        pass_filenames: false
+        always_run: true
+
+# CI configuration
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit hooks
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: [pytest, django-check]  # Skip these in CI, run separately
+  submodules: false
