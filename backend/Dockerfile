@@ -46,4 +46,4 @@ RUN uv run python manage.py collectstatic --noinput || true
 EXPOSE 8000
 
 # Run Django development server
-CMD ["uv", "run", "python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["uv", "run", "python", "manage.py", "runserver", "0.0.0.0:9000"]
