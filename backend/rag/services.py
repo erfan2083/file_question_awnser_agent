@@ -227,6 +227,7 @@ class RAGOrchestrator:
         """Reasoning agent: generate answer with chain-of-thought."""
         query = state["query"]
         chunks = state["retrieved_chunks"]
+        chat_history = state["chat_history"]
         
         if not chunks:
             state["answer"] = (
@@ -245,13 +246,22 @@ class RAGOrchestrator:
             )
         
         context = "\n\n".join(context_parts)
+
+        # Include chat history if available
+        history_context = ""
+        if chat_history:
+            recent_history = chat_history[-4:]  # Last 2 exchanges
+            history_parts = [f"{msg['role'].capitalize()}: {msg['content']}" for msg in recent_history]
+            history_context = f"\nPrevious conversation:\n{chr(10).join(history_parts)}\n"
         
         prompt = f"""You are a helpful AI assistant that answers questions based strictly on the provided document context.
 
 Context from documents:
 {context}
+{history_context}
 
 User Question: {query}
+
 
 Instructions:
 1. Analyze the provided context carefully
