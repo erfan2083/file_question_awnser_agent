@@ -109,6 +109,59 @@ class DocumentViewSet(viewsets.ModelViewSet):
         serializer = DocumentSerializer(document)
         return Response(serializer.data)
     
+    @action(detail=True, methods=["post"], url_path="utility")
+    def utility(self, request, pk=None):
+        """
+        Run a utility action (summarize, translate, checklist) on a document.
+
+        Accepts JSON body with:
+        - action: One of "summarize", "translate", "checklist"
+        """
+        document = self.get_object()
+
+        if document.status != Document.Status.READY:
+            return Response(
+                {"error": "Document is not ready for processing."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        action_name = request.data.get("action", "").strip().lower()
+        if action_name not in ("summarize", "translate", "checklist"):
+            return Response(
+                {
+                    "error": (
+                        f"Invalid action '{action_name}'. "
+                        "Must be one of: summarize, translate, checklist."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from rag.services import RAGOrchestrator
+
+        orchestrator = RAGOrchestrator()
+        result = orchestrator.process_document_utility(
+            document_id=document.id,
+            action=action_name,
+        )
+
+        if result.get("error"):
+            return Response(
+                {"error": result["error"]},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        return Response(
+            {
+                "document_id": document.id,
+                "document_title": document.title,
+                "action": action_name,
+                "answer": result["answer"],
+                "metadata": result.get("metadata", {}),
+            },
+            status=status.HTTP_200_OK,
+        )
+
     def destroy(self, request, *args, **kwargs):
         """Delete a document and its chunks."""
         document = self.get_object()
