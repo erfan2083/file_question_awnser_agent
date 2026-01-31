@@ -304,31 +304,127 @@ Answer:"""
         """Utility agent: handle summarization, translation, checklist generation."""
         query = state["query"]
         intent = state["intent"]
-        
+        document_content = state.get("document_content", "")
+
+        # Use document content if provided, otherwise fall back to query text
+        text_to_process = document_content if document_content else query
+
         try:
             if intent == "SUMMARIZE":
-                prompt = f"Summarize the following text concisely:\n\n{query}\n\nProvide a clear, concise summary."
+                prompt = (
+                    f"Summarize the following document text concisely:\n\n"
+                    f"{text_to_process}\n\n"
+                    f"Provide a clear, concise summary."
+                )
             elif intent == "TRANSLATE":
-                prompt = f"Translate the following text to English if it's Persian, or Persian if it's English:\n\n{query}"
+                prompt = (
+                    f"Translate the following text to English if it's Persian, "
+                    f"or Persian if it's English:\n\n{text_to_process}"
+                )
             elif intent == "CHECKLIST":
-                prompt = f"Create a structured checklist or task list based on the following text:\n\n{query}"
+                prompt = (
+                    f"Create a structured checklist or task list based on "
+                    f"the following document text:\n\n{text_to_process}"
+                )
             else:
                 state["error"] = f"Unknown utility intent: {intent}"
                 return state
-            
+
             # Use self.llm (ChatGoogleGenerativeAI) for utility tasks
             response = self.llm.invoke(prompt)
             state["answer"] = response.content
             state["citations"] = []
             state["metadata"]["agent_type"] = "utility"
             state["metadata"]["utility_function"] = intent.lower()
-            
+
         except Exception as e:
             print(f"❌ Utility Agent Error: {str(e)}")
             state["error"] = f"Utility agent error: {str(e)}"
             state["answer"] = "I encountered an error processing your request."
-        
+
         return state
+
+    def process_document_utility(
+        self,
+        document_id: int,
+        action: str,
+    ) -> Dict[str, Any]:
+        """
+        Process a utility action on a specific document's full content.
+
+        Args:
+            document_id: The ID of the document to process.
+            action: One of SUMMARIZE, TRANSLATE, CHECKLIST.
+
+        Returns:
+            Dict with answer, citations, metadata, error.
+        """
+        from documents.models import Document
+
+        try:
+            document = Document.objects.get(id=document_id, status="READY")
+        except Document.DoesNotExist:
+            return {
+                "answer": "",
+                "citations": [],
+                "metadata": {},
+                "error": "Document not found or not ready.",
+            }
+
+        # Gather all chunk texts for this document, ordered by index
+        chunks = DocumentChunk.objects.filter(document=document).order_by("index")
+        if not chunks.exists():
+            return {
+                "answer": "",
+                "citations": [],
+                "metadata": {},
+                "error": "Document has no content chunks.",
+            }
+
+        full_text = "\n\n".join(chunk.text for chunk in chunks)
+
+        # Build state and run utility directly (skip router)
+        intent = action.upper()
+        if intent not in ("SUMMARIZE", "TRANSLATE", "CHECKLIST"):
+            return {
+                "answer": "",
+                "citations": [],
+                "metadata": {},
+                "error": f"Unknown action: {action}",
+            }
+
+        state = {
+            "query": "",
+            "chat_history": [],
+            "intent": intent,
+            "retrieved_chunks": [],
+            "answer": "",
+            "citations": [],
+            "metadata": {
+                "intent": intent,
+                "document_id": document_id,
+                "document_title": document.title,
+            },
+            "error": "",
+            "document_content": full_text,
+        }
+
+        try:
+            state = self._utility_agent(state)
+            return {
+                "answer": state.get("answer", ""),
+                "citations": state.get("citations", []),
+                "metadata": state.get("metadata", {}),
+                "error": state.get("error", ""),
+            }
+        except Exception as e:
+            print(f"❌ Document Utility Error: {str(e)}")
+            return {
+                "answer": "",
+                "citations": [],
+                "metadata": {},
+                "error": str(e),
+            }
     
     def _generate_query_embedding(self, query: str) -> List[float]:
         """Generate embedding for query."""

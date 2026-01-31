@@ -24,6 +24,9 @@ export const documentsApi = {
   get: (id) => api.get(`/api/documents/${id}/`),
   
   delete: (id) => api.delete(`/api/documents/${id}/`),
+
+  utility: (id, action) =>
+    api.post(`/api/documents/${id}/utility/`, { action }),
 };
 
 // Chat API
