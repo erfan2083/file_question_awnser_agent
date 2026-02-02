@@ -5,7 +5,7 @@ Views for documents app.
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.db import transaction
 
 from documents.models import Document, DocumentChunk
@@ -23,7 +23,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
     
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
     
     def get_serializer_class(self):
         """Return appropriate serializer based on action."""
